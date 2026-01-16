@@ -1,0 +1,263 @@
+// Minesweeper board renderer
+const Board = {
+  canvas: null,
+  ctx: null,
+  board: null,
+  settings: null,
+  cellSize: 30,
+  offsetX: 0,
+  offsetY: 0,
+  players: {},
+  cursors: {},
+  touchStart: null,
+  longPressTimer: null,
+  
+  COLORS: {
+    1: '#5eb1bf',
+    2: '#8ac926',
+    3: '#cf6679',
+    4: '#b388eb',
+    5: '#f4a261',
+    6: '#5eb1bf',
+    7: '#1a1a1a',
+    8: '#888888'
+  },
+
+  init(canvas, settings, players) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.settings = settings;
+    this.players = {};
+    players.forEach(p => {
+      this.players[p.id] = p;
+    });
+    
+    // Initialize empty board
+    this.board = Array(settings.height).fill(null).map(() =>
+      Array(settings.width).fill(null).map(() => ({ state: 'hidden' }))
+    );
+
+    this.calculateSize();
+    this.setupEvents();
+    this.render();
+  },
+
+  calculateSize() {
+    const maxWidth = Math.min(window.innerWidth - 100, 900);
+    const maxHeight = window.innerHeight - 300;
+    
+    const cellWidth = Math.floor(maxWidth / this.settings.width);
+    const cellHeight = Math.floor(maxHeight / this.settings.height);
+    
+    this.cellSize = Math.min(cellWidth, cellHeight, 40);
+    this.cellSize = Math.max(this.cellSize, 20); // Minimum size
+    
+    this.canvas.width = this.settings.width * this.cellSize;
+    this.canvas.height = this.settings.height * this.cellSize;
+    
+    this.offsetX = 0;
+    this.offsetY = 0;
+  },
+
+  setupEvents() {
+    // Mouse events (desktop)
+    this.canvas.addEventListener('click', (e) => this.handleClick(e));
+    this.canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      this.handleRightClick(e);
+    });
+    this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+
+    // Touch events (mobile)
+    this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+    this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
+    this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+  },
+
+  getCellFromEvent(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    
+    const x = Math.floor((clientX - rect.left) * scaleX / this.cellSize);
+    const y = Math.floor((clientY - rect.top) * scaleY / this.cellSize);
+    
+    return { x, y };
+  },
+
+  handleClick(e) {
+    const { x, y } = this.getCellFromEvent(e);
+    if (x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
+      if (this.board[y][x].state === 'hidden') {
+        Socket.reveal(x, y);
+      }
+    }
+  },
+
+  handleRightClick(e) {
+    e.preventDefault();
+    const { x, y } = this.getCellFromEvent(e);
+    if (x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
+      if (this.board[y][x].state !== 'revealed') {
+        Socket.flag(x, y);
+      }
+    }
+  },
+
+  handleMouseMove(e) {
+    const { x, y } = this.getCellFromEvent(e);
+    if (x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
+      Socket.cursor(x, y);
+    }
+  },
+
+  // Mobile touch handling with long-press for flag
+  handleTouchStart(e) {
+    e.preventDefault();
+    const { x, y } = this.getCellFromEvent(e);
+    
+    this.touchStart = { x, y, time: Date.now() };
+    
+    // Start long-press timer
+    this.longPressTimer = setTimeout(() => {
+      if (this.touchStart && x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
+        if (this.board[y][x].state !== 'revealed') {
+          Socket.flag(x, y);
+          Audio.play('flag');
+          this.touchStart = null;
+        }
+      }
+    }, 500);
+  },
+
+  handleTouchEnd(e) {
+    e.preventDefault();
+    clearTimeout(this.longPressTimer);
+    
+    if (this.touchStart) {
+      const { x, y } = this.touchStart;
+      const duration = Date.now() - this.touchStart.time;
+      
+      // Short tap = reveal
+      if (duration < 500 && x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
+        if (this.board[y][x].state === 'hidden') {
+          Socket.reveal(x, y);
+        }
+      }
+    }
+    
+    this.touchStart = null;
+  },
+
+  handleTouchMove(e) {
+    e.preventDefault();
+    // Cancel long-press if finger moves
+    clearTimeout(this.longPressTimer);
+    this.touchStart = null;
+  },
+
+  updateBoard(board) {
+    this.board = board;
+    this.render();
+  },
+
+  updateCursor(playerId, x, y) {
+    this.cursors[playerId] = { x, y };
+    this.render();
+  },
+
+  render() {
+    const ctx = this.ctx;
+    
+    // Clear
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Draw cells
+    for (let y = 0; y < this.settings.height; y++) {
+      for (let x = 0; x < this.settings.width; x++) {
+        this.drawCell(x, y, this.board[y][x]);
+      }
+    }
+
+    // Draw cursors
+    for (const playerId in this.cursors) {
+      const cursor = this.cursors[playerId];
+      const player = this.players[playerId];
+      if (player && cursor) {
+        this.drawCursor(cursor.x, cursor.y, player.color);
+      }
+    }
+  },
+
+  drawCell(x, y, cell) {
+    const ctx = this.ctx;
+    const px = x * this.cellSize;
+    const py = y * this.cellSize;
+
+    // Cell background
+    if (cell.state === 'revealed') {
+      ctx.fillStyle = '#0a0a0a';
+    } else {
+      ctx.fillStyle = '#2a2a2a';
+    }
+    ctx.fillRect(px, py, this.cellSize, this.cellSize);
+
+    // Border
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px, py, this.cellSize, this.cellSize);
+
+    // Content
+    if (cell.state === 'revealed') {
+      if (cell.value === 'mine') {
+        // Draw mine
+        ctx.fillStyle = '#cf6679';
+        ctx.beginPath();
+        ctx.arc(px + this.cellSize / 2, py + this.cellSize / 2, this.cellSize * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (cell.value > 0) {
+        // Draw number
+        ctx.fillStyle = this.COLORS[cell.value] || '#888888';
+        ctx.font = `bold ${this.cellSize * 0.6}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(cell.value, px + this.cellSize / 2, py + this.cellSize / 2);
+      }
+
+      // Revealed by indicator (small dot in corner)
+      if (cell.revealedBy && this.players[cell.revealedBy]) {
+        ctx.fillStyle = this.players[cell.revealedBy].color;
+        ctx.beginPath();
+        ctx.arc(px + this.cellSize - 5, py + 5, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (cell.state === 'flagged') {
+      // Draw flag
+      ctx.fillStyle = '#5eb1bf';
+      ctx.font = `${this.cellSize * 0.6}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚑', px + this.cellSize / 2, py + this.cellSize / 2);
+    }
+  },
+
+  drawCursor(x, y, color) {
+    const ctx = this.ctx;
+    const px = x * this.cellSize;
+    const py = y * this.cellSize;
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(px + 2, py + 2, this.cellSize - 4, this.cellSize - 4);
+  }
+};

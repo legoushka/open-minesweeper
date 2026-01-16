@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CO-OP MINESWEEPER</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Home Screen -->
+    <div id="home-screen" class="screen">
+      <h1 class="title">CO-OP MINESWEEPER</h1>
+      
+      <div class="avatar-section">
+        <div class="avatar-preview-container">
+          <canvas id="avatar-preview" width="120" height="120"></canvas>
+        </div>
+        
+        <div class="avatar-controls">
+          <div class="control-group">
+            <label>Name</label>
+            <input type="text" id="player-name" maxlength="16" placeholder="Your name">
+          </div>
+          
+          <div class="control-group">
+            <label>Body</label>
+            <div id="body-colors" class="color-picker"></div>
+          </div>
+          
+          <div class="control-group">
+            <label>Eyes</label>
+            <div id="eyes-picker" class="option-picker"></div>
+          </div>
+          
+          <div class="control-group">
+            <label>Accessory</label>
+            <div id="accessory-picker" class="option-picker"></div>
+          </div>
+          
+          <div class="control-group">
+            <label>Cursor Color</label>
+            <div id="player-colors" class="color-picker"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="create-btn" class="btn btn-primary">CREATE GAME</button>
+        <button id="join-btn" class="btn btn-secondary">JOIN GAME</button>
+      </div>
+
+      <div id="join-section" class="hidden">
+        <input type="text" id="join-code" placeholder="GAME CODE" maxlength="6">
+        <button id="join-submit-btn" class="btn btn-primary">JOIN</button>
+      </div>
+
+      <div id="create-section" class="hidden">
+        <div class="settings-grid">
+          <div class="control-group">
+            <label>Preset</label>
+            <select id="preset-select">
+              <option value="beginner">Beginner (9×9, 10 mines)</option>
+              <option value="intermediate" selected>Intermediate (16×16, 40 mines)</option>
+              <option value="expert">Expert (30×16, 99 mines)</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          
+          <div id="custom-settings" class="hidden">
+            <div class="control-group">
+              <label>Width</label>
+              <input type="number" id="custom-width" min="5" max="50" value="16">
+            </div>
+            <div class="control-group">
+              <label>Height</label>
+              <input type="number" id="custom-height" min="5" max="30" value="16">
+            </div>
+            <div class="control-group">
+              <label>Mines</label>
+              <input type="number" id="custom-mines" min="1" max="999" value="40">
+            </div>
+          </div>
+          
+          <div class="control-group">
+            <label>Max Players</label>
+            <input type="number" id="max-players" min="2" max="8" value="4">
+          </div>
+        </div>
+        
+        <button id="create-submit-btn" class="btn btn-primary">CREATE</button>
+      </div>
+    </div>
+
+    <!-- Lobby Screen -->
+    <div id="lobby-screen" class="screen hidden">
+      <h1 class="title">LOBBY</h1>
+      
+      <div class="game-code-section">
+        <div class="game-code" id="game-code-display"></div>
+        <button id="copy-code-btn" class="btn btn-small">COPY</button>
+      </div>
+
+      <div class="players-section">
+        <h2>PLAYERS <span id="player-count"></span></h2>
+        <div id="players-list"></div>
+      </div>
+
+      <div class="game-info">
+        <p id="game-settings"></p>
+      </div>
+
+      <div class="actions">
+        <button id="start-game-btn" class="btn btn-primary hidden">START GAME</button>
+        <button id="leave-lobby-btn" class="btn btn-secondary">LEAVE</button>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen hidden">
+      <div class="game-header">
+        <div class="game-stats">
+          <div class="stat">
+            <span class="stat-label">⚑</span>
+            <span id="flags-remaining">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">⏱</span>
+            <span id="timer">00:00</span>
+          </div>
+        </div>
+        
+        <div id="players-bar"></div>
+      </div>
+
+      <div class="game-container">
+        <canvas id="game-canvas"></canvas>
+      </div>
+
+      <div id="game-over-overlay" class="overlay hidden">
+        <div class="overlay-content">
+          <h2 id="game-result"></h2>
+          <p id="game-result-detail"></p>
+          <div class="actions">
+            <button id="play-again-btn" class="btn btn-primary">PLAY AGAIN</button>
+            <button id="back-to-lobby-btn" class="btn btn-secondary">BACK TO LOBBY</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-actions">
+        <button id="leave-game-btn" class="btn btn-small">LEAVE</button>
+        <button id="mute-btn" class="btn btn-small">SOUND: ON</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/avatar.js"></script>
+  <script src="js/socket.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/screens/home.js"></script>
+  <script src="js/screens/lobby.js"></script>
+  <script src="js/screens/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

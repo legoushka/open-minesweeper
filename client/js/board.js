@@ -11,6 +11,8 @@ const Board = {
   cursors: {},
   touchStart: null,
   longPressTimer: null,
+  eventsInitialized: false,
+  userZoomLevel: null,
   
   COLORS: {
     1: '#5eb1bf',
@@ -43,14 +45,30 @@ const Board = {
   },
 
   calculateSize() {
-    const maxWidth = Math.min(window.innerWidth - 100, 900);
-    const maxHeight = window.innerHeight - 300;
+    const isMobile = window.innerWidth < 768;
+    const marginX = isMobile ? 10 : 100;
+    const marginY = isMobile ? 140 : 300;
+
+    const maxWidth = isMobile ? window.innerWidth - marginX : Math.min(window.innerWidth - marginX, 900);
+    const maxHeight = window.innerHeight - marginY;
     
-    const cellWidth = Math.floor(maxWidth / this.settings.width);
-    const cellHeight = Math.floor(maxHeight / this.settings.height);
-    
-    // Keep minimum cell size for mobile (30px for easy tapping)
-    this.cellSize = Math.max(Math.min(cellWidth, cellHeight, 40), 30);
+    // If user has set a zoom level, use it
+    if (this.userZoomLevel !== null) {
+      this.cellSize = this.userZoomLevel;
+    } else {
+      const cellWidth = Math.floor(maxWidth / this.settings.width);
+      const cellHeight = Math.floor(maxHeight / this.settings.height);
+      
+      // Calculate best fit size, but allow it to be larger on mobile (will scroll)
+      let targetSize = Math.min(cellWidth, cellHeight);
+      
+      // Limits: Min 30px (desktop) / 34px (mobile), Max 40px (desktop) / 60px (mobile)
+      const minSize = isMobile ? 34 : 30;
+      const maxSize = isMobile ? 60 : 40;
+
+      this.cellSize = Math.max(targetSize, minSize);
+      this.cellSize = Math.min(this.cellSize, maxSize);
+    }
     
     // Canvas is full board size (may exceed viewport)
     this.canvas.width = this.settings.width * this.cellSize;
@@ -58,17 +76,50 @@ const Board = {
     
     // Make canvas container scrollable if board is larger than viewport
     const container = this.canvas.parentElement;
-    if (this.canvas.width > maxWidth || this.canvas.height > maxHeight) {
+    if (container) {
+      // On mobile, allow the container to be wider if needed, but constrain to viewport for scrolling
       container.style.overflow = 'auto';
-      container.style.maxWidth = `${maxWidth}px`;
-      container.style.maxHeight = `${maxHeight}px`;
+      container.style.maxWidth = isMobile ? '100vw' : `${Math.min(window.innerWidth - marginX, 900)}px`;
+      container.style.maxHeight = isMobile ? '70vh' : `${maxHeight}px`;
     }
     
     this.offsetX = 0;
     this.offsetY = 0;
+    
+    // Update slider if present
+    const slider = document.getElementById('zoom-slider');
+    if (slider) {
+      slider.value = this.cellSize;
+    }
+  },
+
+  setCellSize(size) {
+    this.cellSize = size;
+    this.userZoomLevel = size;
+    
+    // Recalculate canvas dimensions
+    this.canvas.width = this.settings.width * this.cellSize;
+    this.canvas.height = this.settings.height * this.cellSize;
+    
+    // Ensure container is still correct
+    const isMobile = window.innerWidth < 768;
+    const marginX = isMobile ? 10 : 100;
+    const marginY = isMobile ? 140 : 300;
+    const maxHeight = window.innerHeight - marginY;
+    
+    const container = this.canvas.parentElement;
+    if (container) {
+      container.style.overflow = 'auto';
+      container.style.maxWidth = isMobile ? '100vw' : `${Math.min(window.innerWidth - marginX, 900)}px`;
+      container.style.maxHeight = isMobile ? '70vh' : `${maxHeight}px`;
+    }
+
+    this.render();
   },
 
   setupEvents() {
+    if (this.eventsInitialized) return;
+
     // Mouse events (desktop)
     this.canvas.addEventListener('click', (e) => this.handleClick(e));
     this.canvas.addEventListener('contextmenu', (e) => {
@@ -81,6 +132,8 @@ const Board = {
     this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
     this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
     this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+
+    this.eventsInitialized = true;
   },
 
   getCellFromEvent(e) {

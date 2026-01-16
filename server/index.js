@@ -192,8 +192,8 @@ wss.on('connection', (ws) => {
           const game = gameManager.getGame(currentGameCode);
           if (!game) break;
           
-          if (game.hostId !== currentPlayerId) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Only host can restart' }));
+          if (game.state !== 'won' && game.state !== 'lost') {
+            ws.send(JSON.stringify({ type: 'error', message: 'Game is still in progress' }));
             break;
           }
           

@@ -3,10 +3,15 @@ const GameScreen = {
   game: null,
   playerId: null,
   timerInterval: null,
+  controlsInitialized: false,
 
   init(game, playerId) {
     this.game = game;
     this.playerId = playerId;
+
+    // Ensure game over screen is hidden and timer is reset
+    document.getElementById('game-over-overlay').classList.add('hidden');
+    this.stopTimer();
 
     const canvas = document.getElementById('game-canvas');
     Board.init(canvas, game.settings, game.players);
@@ -37,6 +42,11 @@ const GameScreen = {
       const indicator = document.createElement('div');
       indicator.className = 'player-indicator';
 
+      const avatarContainer = document.createElement('div');
+      // Inline style for mini avatar container since we don't have a class for it yet
+      avatarContainer.style.marginRight = '5px';
+      Avatar.renderInElement(avatarContainer, player.avatar, 24);
+
       const dot = document.createElement('div');
       dot.className = 'player-dot';
       dot.style.backgroundColor = player.color;
@@ -45,6 +55,7 @@ const GameScreen = {
       name.textContent = player.name;
       name.style.fontSize = '0.9rem';
 
+      indicator.appendChild(avatarContainer);
       indicator.appendChild(dot);
       indicator.appendChild(name);
       playersBar.appendChild(indicator);
@@ -52,6 +63,8 @@ const GameScreen = {
   },
 
   setupControls() {
+    if (this.controlsInitialized) return;
+
     document.getElementById('leave-game-btn').addEventListener('click', () => {
       if (confirm('Are you sure you want to leave?')) {
         window.location.reload();
@@ -74,6 +87,16 @@ const GameScreen = {
       Socket.toLobby();
       this.hideGameOver();
     });
+
+    const zoomSlider = document.getElementById('zoom-slider');
+    if (zoomSlider) {
+      zoomSlider.addEventListener('input', (e) => {
+        const size = parseInt(e.target.value);
+        Board.setCellSize(size);
+      });
+    }
+
+    this.controlsInitialized = true;
   },
 
   startTimer() {
@@ -132,14 +155,12 @@ const GameScreen = {
     const playAgainBtn = document.getElementById('play-again-btn');
     const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
     
+    playAgainBtn.classList.remove('hidden');
     if (this.playerId === this.game.hostId) {
-      playAgainBtn.classList.remove('hidden');
-      backToLobbyBtn.classList.remove('hidden');
+        backToLobbyBtn.classList.remove('hidden');
     } else {
-      playAgainBtn.classList.add('hidden');
       backToLobbyBtn.classList.add('hidden');
-      detail.textContent += '\nWaiting for host...';
-    }
+}
   },
 
   hideGameOver() {

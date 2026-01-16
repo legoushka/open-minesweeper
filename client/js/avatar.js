@@ -3,26 +3,19 @@ const Avatar = {
   availableAvatars: [],
   
   async init() {
-    // Load available avatar images
+    // Load available avatar images from JSON manifest
     try {
-      const response = await fetch('assets/avatars/');
-      const text = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, 'text/html');
-      const links = doc.querySelectorAll('a');
-      
-      this.availableAvatars = Array.from(links)
-        .map(a => a.getAttribute('href'))
-        .filter(href => href && (href.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i)))
-        .map(href => `assets/avatars/${href}`);
+      const response = await fetch('assets/avatars/avatars.json');
+      const filenames = await response.json();
+      this.availableAvatars = filenames.map(f => `assets/avatars/${f}`);
     } catch (e) {
-      // Fallback: use placeholder if directory listing fails
-      this.availableAvatars = ['assets/avatars/placeholder.svg'];
+      console.error('Failed to load avatars:', e);
+      this.availableAvatars = [];
     }
     
-    // Always ensure at least the placeholder exists
+    // Fallback if no avatars found
     if (this.availableAvatars.length === 0) {
-      this.availableAvatars = ['assets/avatars/placeholder.svg'];
+      console.warn('No avatars available. Add images to client/assets/avatars/ and run ./scripts/update-avatars.sh');
     }
   },
   

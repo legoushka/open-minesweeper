@@ -24,7 +24,14 @@ const HomeScreen = {
     await Avatar.init();
     
     const saved = Storage.loadPlayer();
-    this.currentAvatar = saved.avatar || Avatar.availableAvatars[0];
+    
+    // If saved avatar doesn't exist in available list, use first available
+    if (saved.avatar && Avatar.availableAvatars.includes(saved.avatar)) {
+      this.currentAvatar = saved.avatar;
+    } else {
+      this.currentAvatar = Avatar.availableAvatars[0] || '';
+    }
+    
     this.currentColor = saved.color;
 
     this.setupAvatarPicker();

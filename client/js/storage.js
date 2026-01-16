@@ -11,7 +11,7 @@ const Storage = {
     }
     return {
       name: '',
-      avatar: 'assets/avatars/placeholder.svg',
+      avatar: '', // Will be set to first available avatar on load
       color: '#5eb1bf'
     };
   },

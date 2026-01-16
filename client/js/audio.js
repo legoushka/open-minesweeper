@@ -55,24 +55,8 @@ const Audio = {
     const osc = this.context.createOscillator();
     const gain = this.context.createGain();
     
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(400, this.context.currentTime);
-    gain.gain.setValueAtTime(0.08, this.context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.15);
-    
-    osc.connect(gain);
-    gain.connect(this.context.destination);
-    
-    osc.start(this.context.currentTime);
-    osc.stop(this.context.currentTime + 0.15);
-  },
-
-  playUnflag() {
-    const osc = this.context.createOscillator();
-    const gain = this.context.createGain();
-    
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(300, this.context.currentTime);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(650, this.context.currentTime);
     gain.gain.setValueAtTime(0.08, this.context.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.12);
     
@@ -81,6 +65,22 @@ const Audio = {
     
     osc.start(this.context.currentTime);
     osc.stop(this.context.currentTime + 0.12);
+  },
+
+  playUnflag() {
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(550, this.context.currentTime);
+    gain.gain.setValueAtTime(0.08, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.1);
+    
+    osc.connect(gain);
+    gain.connect(this.context.destination);
+    
+    osc.start(this.context.currentTime);
+    osc.stop(this.context.currentTime + 0.1);
   },
 
   playMine() {

@@ -11,11 +11,7 @@ const Storage = {
     }
     return {
       name: '',
-      avatar: {
-        bodyColor: '#3d5a80',
-        eyes: 'dots',
-        accessory: 'none'
-      },
+      avatar: 'assets/avatars/placeholder.svg',
       color: '#5eb1bf'
     };
   },

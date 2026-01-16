@@ -49,11 +49,20 @@ const Board = {
     const cellWidth = Math.floor(maxWidth / this.settings.width);
     const cellHeight = Math.floor(maxHeight / this.settings.height);
     
-    this.cellSize = Math.min(cellWidth, cellHeight, 40);
-    this.cellSize = Math.max(this.cellSize, 20); // Minimum size
+    // Keep minimum cell size for mobile (30px for easy tapping)
+    this.cellSize = Math.max(Math.min(cellWidth, cellHeight, 40), 30);
     
+    // Canvas is full board size (may exceed viewport)
     this.canvas.width = this.settings.width * this.cellSize;
     this.canvas.height = this.settings.height * this.cellSize;
+    
+    // Make canvas container scrollable if board is larger than viewport
+    const container = this.canvas.parentElement;
+    if (this.canvas.width > maxWidth || this.canvas.height > maxHeight) {
+      container.style.overflow = 'auto';
+      container.style.maxWidth = `${maxWidth}px`;
+      container.style.maxHeight = `${maxHeight}px`;
+    }
     
     this.offsetX = 0;
     this.offsetY = 0;
@@ -120,20 +129,31 @@ const Board = {
     }
   },
 
-  // Mobile touch handling with long-press for flag
+  // Mobile touch handling: drag to pan, tap to reveal, long-press to flag
   handleTouchStart(e) {
     e.preventDefault();
+    const touch = e.touches[0];
+    const rect = this.canvas.getBoundingClientRect();
+    
     const { x, y } = this.getCellFromEvent(e);
     
-    this.touchStart = { x, y, time: Date.now() };
+    this.touchStart = { 
+      x, 
+      y, 
+      time: Date.now(),
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      isPanning: false
+    };
     
     // Start long-press timer
     this.longPressTimer = setTimeout(() => {
-      if (this.touchStart && x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
+      if (this.touchStart && !this.touchStart.isPanning && 
+          x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
         if (this.board[y][x].state !== 'revealed') {
           Socket.flag(x, y);
           Audio.play('flag');
-          this.touchStart = null;
+          this.touchStart.flagged = true;
         }
       }
     }, 500);
@@ -143,7 +163,7 @@ const Board = {
     e.preventDefault();
     clearTimeout(this.longPressTimer);
     
-    if (this.touchStart) {
+    if (this.touchStart && !this.touchStart.isPanning && !this.touchStart.flagged) {
       const { x, y } = this.touchStart;
       const duration = Date.now() - this.touchStart.time;
       
@@ -160,9 +180,30 @@ const Board = {
 
   handleTouchMove(e) {
     e.preventDefault();
-    // Cancel long-press if finger moves
-    clearTimeout(this.longPressTimer);
-    this.touchStart = null;
+    
+    if (!this.touchStart) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - this.touchStart.clientX;
+    const deltaY = touch.clientY - this.touchStart.clientY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    // If moved more than 10px, treat as panning
+    if (distance > 10) {
+      clearTimeout(this.longPressTimer);
+      this.touchStart.isPanning = true;
+      
+      // Pan the container by scrolling it
+      const container = this.canvas.parentElement;
+      if (container) {
+        container.scrollLeft -= deltaX;
+        container.scrollTop -= deltaY;
+      }
+      
+      // Update touch start position for continuous panning
+      this.touchStart.clientX = touch.clientX;
+      this.touchStart.clientY = touch.clientY;
+    }
   },
 
   updateBoard(board) {

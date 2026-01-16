@@ -1,148 +1,79 @@
-// Avatar creator and renderer
+// Avatar image system
 const Avatar = {
-  BODY_COLORS: [
-    { id: 'blue', hex: '#3d5a80' },
-    { id: 'lightblue', hex: '#98c1d9' },
-    { id: 'rose', hex: '#e56b6f' },
-    { id: 'purple', hex: '#6d6875' },
-    { id: 'mauve', hex: '#b5838d' },
-    { id: 'gray', hex: '#e0e0e0' }
-  ],
-
-  EYES: [
-    { id: 'dots', label: '••' },
-    { id: 'lines', label: '──' },
-    { id: 'crosses', label: '✕✕' },
-    { id: 'hollow', label: '◯◯' },
-    { id: 'squint', label: '⌃⌃' }
-  ],
-
-  ACCESSORIES: [
-    { id: 'none', label: '∅' },
-    { id: 'antenna', label: '⎺' },
-    { id: 'halo', label: '○' },
-    { id: 'horns', label: '⌃⌃' }
-  ],
-
-  render(ctx, avatar, x, y, size) {
-    const centerX = x + size / 2;
-    const centerY = y + size / 2;
-    const radius = size * 0.4;
-
-    // Body (circle)
-    ctx.fillStyle = avatar.bodyColor;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Border
-    ctx.strokeStyle = '#1a1a1a';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Eyes
-    ctx.fillStyle = '#1a1a1a';
-    const eyeY = centerY - radius * 0.15;
-    const eyeSpacing = radius * 0.4;
-
-    switch (avatar.eyes) {
-      case 'dots':
-        ctx.beginPath();
-        ctx.arc(centerX - eyeSpacing, eyeY, radius * 0.12, 0, Math.PI * 2);
-        ctx.arc(centerX + eyeSpacing, eyeY, radius * 0.12, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-
-      case 'lines':
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(centerX - eyeSpacing - radius * 0.15, eyeY);
-        ctx.lineTo(centerX - eyeSpacing + radius * 0.15, eyeY);
-        ctx.moveTo(centerX + eyeSpacing - radius * 0.15, eyeY);
-        ctx.lineTo(centerX + eyeSpacing + radius * 0.15, eyeY);
-        ctx.stroke();
-        break;
-
-      case 'crosses':
-        ctx.lineWidth = 2;
-        const crossSize = radius * 0.12;
-        // Left cross
-        ctx.beginPath();
-        ctx.moveTo(centerX - eyeSpacing - crossSize, eyeY - crossSize);
-        ctx.lineTo(centerX - eyeSpacing + crossSize, eyeY + crossSize);
-        ctx.moveTo(centerX - eyeSpacing + crossSize, eyeY - crossSize);
-        ctx.lineTo(centerX - eyeSpacing - crossSize, eyeY + crossSize);
-        // Right cross
-        ctx.moveTo(centerX + eyeSpacing - crossSize, eyeY - crossSize);
-        ctx.lineTo(centerX + eyeSpacing + crossSize, eyeY + crossSize);
-        ctx.moveTo(centerX + eyeSpacing + crossSize, eyeY - crossSize);
-        ctx.lineTo(centerX + eyeSpacing - crossSize, eyeY + crossSize);
-        ctx.stroke();
-        break;
-
-      case 'hollow':
-        ctx.strokeStyle = '#1a1a1a';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(centerX - eyeSpacing, eyeY, radius * 0.12, 0, Math.PI * 2);
-        ctx.arc(centerX + eyeSpacing, eyeY, radius * 0.12, 0, Math.PI * 2);
-        ctx.stroke();
-        break;
-
-      case 'squint':
-        ctx.lineWidth = 3;
-        const squintSize = radius * 0.15;
-        ctx.beginPath();
-        // Left squint (upward arc)
-        ctx.moveTo(centerX - eyeSpacing - squintSize, eyeY);
-        ctx.quadraticCurveTo(centerX - eyeSpacing, eyeY - squintSize * 0.5, centerX - eyeSpacing + squintSize, eyeY);
-        // Right squint
-        ctx.moveTo(centerX + eyeSpacing - squintSize, eyeY);
-        ctx.quadraticCurveTo(centerX + eyeSpacing, eyeY - squintSize * 0.5, centerX + eyeSpacing + squintSize, eyeY);
-        ctx.stroke();
-        break;
+  availableAvatars: [],
+  
+  async init() {
+    // Load available avatar images
+    try {
+      const response = await fetch('assets/avatars/');
+      const text = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/html');
+      const links = doc.querySelectorAll('a');
+      
+      this.availableAvatars = Array.from(links)
+        .map(a => a.getAttribute('href'))
+        .filter(href => href && (href.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i)))
+        .map(href => `assets/avatars/${href}`);
+    } catch (e) {
+      // Fallback: use placeholder if directory listing fails
+      this.availableAvatars = ['assets/avatars/placeholder.svg'];
     }
-
-    // Accessory
-    ctx.strokeStyle = '#1a1a1a';
-    ctx.fillStyle = '#1a1a1a';
-    ctx.lineWidth = 2;
-
-    switch (avatar.accessory) {
-      case 'antenna':
-        const antennaY = centerY - radius - radius * 0.3;
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY - radius);
-        ctx.lineTo(centerX, antennaY);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(centerX, antennaY, radius * 0.1, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-
-      case 'halo':
-        const haloY = centerY - radius - radius * 0.3;
-        ctx.beginPath();
-        ctx.arc(centerX, haloY, radius * 0.5, 0, Math.PI * 2);
-        ctx.stroke();
-        break;
-
-      case 'horns':
-        const hornY = centerY - radius;
-        const hornX = radius * 0.6;
-        ctx.beginPath();
-        // Left horn
-        ctx.moveTo(centerX - hornX, hornY);
-        ctx.lineTo(centerX - hornX * 1.2, hornY - radius * 0.4);
-        // Right horn
-        ctx.moveTo(centerX + hornX, hornY);
-        ctx.lineTo(centerX + hornX * 1.2, hornY - radius * 0.4);
-        ctx.stroke();
-        break;
+    
+    // Always ensure at least the placeholder exists
+    if (this.availableAvatars.length === 0) {
+      this.availableAvatars = ['assets/avatars/placeholder.svg'];
     }
   },
-
-  renderSmall(ctx, avatar, x, y) {
-    this.render(ctx, avatar, x, y, 40);
+  
+  renderInElement(element, avatarSrc, size = 80) {
+    element.innerHTML = '';
+    element.style.position = 'relative';
+    element.style.width = `${size}px`;
+    element.style.height = `${size}px`;
+    element.style.overflow = 'hidden';
+    
+    const img = document.createElement('img');
+    img.src = avatarSrc;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.display = 'block';
+    
+    // Add scanline overlay
+    const scanlines = document.createElement('div');
+    scanlines.className = 'scanline-overlay';
+    
+    element.appendChild(img);
+    element.appendChild(scanlines);
+  },
+  
+  // For canvas rendering in lobby/game (fallback)
+  renderOnCanvas(ctx, avatarSrc, x, y, size) {
+    const img = new Image();
+    img.src = avatarSrc;
+    img.onload = () => {
+      ctx.save();
+      
+      // Clip to square
+      ctx.beginPath();
+      ctx.rect(x, y, size, size);
+      ctx.clip();
+      
+      // Draw image (cover behavior)
+      ctx.drawImage(img, x, y, size, size);
+      
+      // Draw scanlines on top
+      ctx.strokeStyle = 'rgba(128, 128, 128, 0.15)';
+      ctx.lineWidth = 1;
+      for (let i = y; i < y + size; i += 2) {
+        ctx.beginPath();
+        ctx.moveTo(x, i);
+        ctx.lineTo(x + size, i);
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+    };
   }
 };

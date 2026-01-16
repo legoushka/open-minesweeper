@@ -20,77 +20,59 @@ const HomeScreen = {
     expert: { width: 30, height: 16, mines: 99 }
   },
 
-  init() {
+  async init() {
+    await Avatar.init();
+    
     const saved = Storage.loadPlayer();
-    this.currentAvatar = saved.avatar;
+    this.currentAvatar = saved.avatar || Avatar.availableAvatars[0];
     this.currentColor = saved.color;
 
-    this.setupAvatarCreator();
+    this.setupAvatarPicker();
     this.setupControls();
     this.updatePreview();
   },
 
-  setupAvatarCreator() {
+  setupAvatarPicker() {
     const nameInput = document.getElementById('player-name');
     nameInput.value = Storage.loadPlayer().name;
-    nameInput.addEventListener('input', () => this.updatePreview());
 
-    // Body colors
-    const bodyColors = document.getElementById('body-colors');
-    Avatar.BODY_COLORS.forEach(color => {
-      const div = document.createElement('div');
-      div.className = 'color-option';
-      div.style.backgroundColor = color.hex;
-      if (color.hex === this.currentAvatar.bodyColor) {
-        div.classList.add('selected');
+    // Avatar image grid
+    const avatarGrid = document.getElementById('avatar-grid');
+    avatarGrid.innerHTML = '';
+    
+    Avatar.availableAvatars.forEach(avatarSrc => {
+      const container = document.createElement('div');
+      container.className = 'avatar-option';
+      if (avatarSrc === this.currentAvatar) {
+        container.classList.add('selected');
       }
-      div.addEventListener('click', () => {
-        document.querySelectorAll('#body-colors .color-option').forEach(el => el.classList.remove('selected'));
-        div.classList.add('selected');
-        this.currentAvatar.bodyColor = color.hex;
+      
+      const imgWrapper = document.createElement('div');
+      imgWrapper.className = 'avatar-image-wrapper';
+      
+      const img = document.createElement('img');
+      img.src = avatarSrc;
+      
+      const scanlines = document.createElement('div');
+      scanlines.className = 'scanline-overlay';
+      
+      imgWrapper.appendChild(img);
+      imgWrapper.appendChild(scanlines);
+      container.appendChild(imgWrapper);
+      
+      container.addEventListener('click', () => {
+        document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+        container.classList.add('selected');
+        this.currentAvatar = avatarSrc;
         this.updatePreview();
       });
-      bodyColors.appendChild(div);
+      
+      avatarGrid.appendChild(container);
     });
 
-    // Eyes
-    const eyesPicker = document.getElementById('eyes-picker');
-    Avatar.EYES.forEach(eye => {
-      const div = document.createElement('div');
-      div.className = 'option-btn';
-      div.textContent = eye.label;
-      if (eye.id === this.currentAvatar.eyes) {
-        div.classList.add('selected');
-      }
-      div.addEventListener('click', () => {
-        document.querySelectorAll('#eyes-picker .option-btn').forEach(el => el.classList.remove('selected'));
-        div.classList.add('selected');
-        this.currentAvatar.eyes = eye.id;
-        this.updatePreview();
-      });
-      eyesPicker.appendChild(div);
-    });
-
-    // Accessories
-    const accessoryPicker = document.getElementById('accessory-picker');
-    Avatar.ACCESSORIES.forEach(acc => {
-      const div = document.createElement('div');
-      div.className = 'option-btn';
-      div.textContent = acc.label;
-      if (acc.id === this.currentAvatar.accessory) {
-        div.classList.add('selected');
-      }
-      div.addEventListener('click', () => {
-        document.querySelectorAll('#accessory-picker .option-btn').forEach(el => el.classList.remove('selected'));
-        div.classList.add('selected');
-        this.currentAvatar.accessory = acc.id;
-        this.updatePreview();
-      });
-      accessoryPicker.appendChild(div);
-    });
-
-    // Player colors
+    // Player cursor colors
     const playerColors = document.getElementById('player-colors');
+    playerColors.innerHTML = '';
     this.PLAYER_COLORS.forEach(color => {
       const div = document.createElement('div');
       div.className = 'color-option';
@@ -143,10 +125,8 @@ const HomeScreen = {
   },
 
   updatePreview() {
-    const canvas = document.getElementById('avatar-preview');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    Avatar.render(ctx, this.currentAvatar, 0, 0, 120);
+    const previewContainer = document.getElementById('avatar-preview-container');
+    Avatar.renderInElement(previewContainer, this.currentAvatar, 100);
   },
 
   getPlayerData() {

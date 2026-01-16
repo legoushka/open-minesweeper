@@ -7,15 +7,27 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- Kid A Mountains Background -->
+  <svg id="mountains-bg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="redGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#3a0a0a;stop-opacity:0" />
+        <stop offset="100%" style="stop-color:#3a0a0a;stop-opacity:0.6" />
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="1000" height="300" fill="url(#redGlow)"/>
+    <polygon points="0,300 0,180 150,200 300,140 400,160 500,120 650,180 800,150 1000,200 1000,300" fill="#161616" opacity="0.9"/>
+    <polygon points="0,300 100,220 250,200 350,180 550,210 700,170 900,220 1000,240 1000,300" fill="#111111" opacity="0.95"/>
+    <polygon points="0,300 150,240 300,230 500,260 700,240 850,270 1000,260 1000,300" fill="#0d0d0d"/>
+  </svg>
+  
   <div id="app">
     <!-- Home Screen -->
     <div id="home-screen" class="screen">
       <h1 class="title">CO-OP MINESWEEPER</h1>
       
       <div class="avatar-section">
-        <div class="avatar-preview-container">
-          <canvas id="avatar-preview" width="120" height="120"></canvas>
-        </div>
+        <div id="avatar-preview-container" class="avatar-preview-container"></div>
         
         <div class="avatar-controls">
           <div class="control-group">
@@ -24,18 +36,8 @@
           </div>
           
           <div class="control-group">
-            <label>Body</label>
-            <div id="body-colors" class="color-picker"></div>
-          </div>
-          
-          <div class="control-group">
-            <label>Eyes</label>
-            <div id="eyes-picker" class="option-picker"></div>
-          </div>
-          
-          <div class="control-group">
-            <label>Accessory</label>
-            <div id="accessory-picker" class="option-picker"></div>
+            <label>Avatar</label>
+            <div id="avatar-grid" class="avatar-grid"></div>
           </div>
           
           <div class="control-group">

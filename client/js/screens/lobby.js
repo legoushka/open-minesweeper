@@ -31,13 +31,10 @@ const LobbyScreen = {
       const item = document.createElement('div');
       item.className = 'player-item';
 
-      // Avatar canvas
-      const canvas = document.createElement('canvas');
-      canvas.className = 'player-avatar-small';
-      canvas.width = 40;
-      canvas.height = 40;
-      const ctx = canvas.getContext('2d');
-      Avatar.renderSmall(ctx, player.avatar, 0, 0);
+      // Avatar image
+      const avatarContainer = document.createElement('div');
+      avatarContainer.className = 'player-avatar-small';
+      Avatar.renderInElement(avatarContainer, player.avatar, 40);
 
       // Player name
       const nameSpan = document.createElement('span');
@@ -59,7 +56,7 @@ const LobbyScreen = {
         roleSpan.textContent += ' (YOU)';
       }
 
-      item.appendChild(canvas);
+      item.appendChild(avatarContainer);
       item.appendChild(colorDot);
       item.appendChild(nameSpan);
       item.appendChild(roleSpan);

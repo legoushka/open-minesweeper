@@ -13,6 +13,10 @@ const Board = {
   longPressTimer: null,
   eventsInitialized: false,
   userZoomLevel: null,
+  emotes: [], // Array of {x, y, value, startTime, color}
+  localPlayerId: null,
+  isInputLocked: false,
+  renderRequested: false,
   
   COLORS: {
     1: '#5eb1bf',
@@ -25,11 +29,12 @@ const Board = {
     8: '#888888'
   },
 
-  init(canvas, settings, players) {
+  init(canvas, settings, players, localPlayerId) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.settings = settings;
     this.players = {};
+    this.localPlayerId = localPlayerId;
     players.forEach(p => {
       this.players[p.id] = p;
     });
@@ -41,7 +46,7 @@ const Board = {
 
     this.calculateSize();
     this.setupEvents();
-    this.render();
+    this.requestRender();
   },
 
   calculateSize() {
@@ -157,6 +162,7 @@ const Board = {
   },
 
   handleClick(e) {
+    if (this.isInputLocked) return;
     const { x, y } = this.getCellFromEvent(e);
     if (x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
       if (this.board[y][x].state === 'hidden') {
@@ -166,6 +172,7 @@ const Board = {
   },
 
   handleRightClick(e) {
+    if (this.isInputLocked) return;
     e.preventDefault();
     const { x, y } = this.getCellFromEvent(e);
     if (x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
@@ -176,14 +183,20 @@ const Board = {
   },
 
   handleMouseMove(e) {
+    if (this.isInputLocked) return;
     const { x, y } = this.getCellFromEvent(e);
     if (x >= 0 && x < this.settings.width && y >= 0 && y < this.settings.height) {
       Socket.cursor(x, y);
+      // Update local cursor immediately for smoothness and self-visibility
+      if (this.localPlayerId) {
+        this.updateCursor(this.localPlayerId, x, y);
+      }
     }
   },
 
   // Mobile touch handling: drag to pan, tap to reveal, long-press to flag
   handleTouchStart(e) {
+    if (this.isInputLocked) return;
     e.preventDefault();
     const touch = e.touches[0];
     const rect = this.canvas.getBoundingClientRect();
@@ -261,12 +274,49 @@ const Board = {
 
   updateBoard(board) {
     this.board = board;
-    this.render();
+    this.requestRender();
   },
 
   updateCursor(playerId, x, y) {
     this.cursors[playerId] = { x, y };
-    this.render();
+    this.requestRender();
+  },
+
+  addEmote(playerId, value) {
+    // Find player position (cursor or default center)
+    let x, y;
+    if (this.cursors[playerId]) {
+      x = this.cursors[playerId].x * this.cellSize + this.cellSize / 2;
+      y = this.cursors[playerId].y * this.cellSize;
+    } else {
+      // If no cursor data yet, use canvas center
+      x = this.canvas.width / 2;
+      y = this.canvas.height / 2;
+    }
+
+    const player = this.players[playerId];
+    const color = player ? player.color : '#fff';
+
+    this.emotes.push({
+      x,
+      y,
+      value,
+      startTime: Date.now(),
+      color
+    });
+    
+    // Trigger render loop if not running
+    this.requestRender();
+  },
+
+  requestRender() {
+    if (!this.renderRequested) {
+      this.renderRequested = true;
+      requestAnimationFrame(() => {
+        this.renderRequested = false;
+        this.render();
+      });
+    }
   },
 
   render() {
@@ -290,6 +340,38 @@ const Board = {
       if (player && cursor) {
         this.drawCursor(cursor.x, cursor.y, player.color);
       }
+    }
+
+    // Draw emotes
+    const now = Date.now();
+    this.emotes = this.emotes.filter(emote => now - emote.startTime < 3000);
+    
+    this.emotes.forEach(emote => {
+      const age = now - emote.startTime;
+      const opacity = 1 - (age / 3000);
+      const lift = (age / 3000) * 50; // Move up 50px
+      
+      const ctx = this.ctx;
+      ctx.globalAlpha = opacity;
+      ctx.fillStyle = emote.color;
+      ctx.font = 'bold 24px sans-serif'; 
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      
+      // Shadow for readability
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 4;
+      ctx.lineWidth = 3;
+      ctx.strokeText(emote.value, emote.x, emote.y - lift);
+      ctx.shadowBlur = 0;
+      
+      ctx.fillText(emote.value, emote.x, emote.y - lift);
+      ctx.globalAlpha = 1;
+    });
+
+    // Keep animating if there are emotes
+    if (this.emotes.length > 0) {
+      this.requestRender();
     }
   },
 

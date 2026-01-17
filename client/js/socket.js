@@ -90,5 +90,9 @@ const Socket = {
 
   toLobby() {
     this.send('toLobby');
+  },
+
+  emote(value) {
+    this.send('emote', { value });
   }
 };

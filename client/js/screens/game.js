@@ -14,7 +14,7 @@ const GameScreen = {
     this.stopTimer();
 
     const canvas = document.getElementById('game-canvas');
-    Board.init(canvas, game.settings, game.players);
+    Board.init(canvas, game.settings, game.players, playerId);
 
     if (game.board) {
       Board.updateBoard(game.board);
@@ -95,6 +95,77 @@ const GameScreen = {
         Board.setCellSize(size);
       });
     }
+
+    // Emote system
+    const emoteBtn = document.getElementById('emote-btn');
+    const emoteMenu = document.getElementById('emote-menu');
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    // Track mouse
+    document.addEventListener('mousemove', (e) => {
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+    
+    // Toggle menu (Grid Mode - Click)
+    const toggleEmoteMenu = (e) => {
+      e.stopPropagation();
+      emoteMenu.classList.remove('radial-mode');
+      emoteMenu.style.top = '';
+      emoteMenu.style.left = '';
+      emoteMenu.style.transform = '';
+      
+      const isHidden = emoteMenu.classList.toggle('hidden');
+      Board.isInputLocked = !isHidden; // Lock input when menu is open
+    };
+
+    emoteBtn.addEventListener('click', toggleEmoteMenu);
+    
+    // PC hotkey 'E' (Radial Mode)
+    document.addEventListener('keydown', (e) => {
+      if (e.repeat) return;
+      
+      // Use e.code instead of e.key to support all keyboard layouts (e.g. Russian)
+      if (this.game && this.game.state === 'playing' && e.code === 'KeyE') {
+        if (document.activeElement.tagName !== 'INPUT') {
+          e.preventDefault(); // Prevent typing 'e'
+          
+          if (emoteMenu.classList.contains('hidden')) {
+            // Open in radial mode at cursor
+            emoteMenu.classList.remove('hidden');
+            emoteMenu.classList.add('radial-mode');
+            emoteMenu.style.top = `${lastMouseY}px`;
+            emoteMenu.style.left = `${lastMouseX}px`;
+            Board.isInputLocked = true;
+          } else {
+            // Close if already open
+            emoteMenu.classList.add('hidden');
+            Board.isInputLocked = false;
+          }
+        }
+      }
+    });
+
+    // Handle emote selection
+    document.querySelectorAll('.emote-option').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const value = e.target.textContent;
+        Socket.emote(value);
+        emoteMenu.classList.add('hidden');
+        Board.isInputLocked = false;
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!emoteMenu.contains(e.target) && e.target !== emoteBtn) {
+        if (!emoteMenu.classList.contains('hidden')) {
+          emoteMenu.classList.add('hidden');
+          Board.isInputLocked = false;
+        }
+      }
+    });
 
     this.controlsInitialized = true;
   },

@@ -593,10 +593,123 @@ select:focus {
   }
 }
 
+/* Emote Menu */
+#emote-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 10px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--accent-blue);
+  padding: 10px;
+  border-radius: 4px;
+  width: 200px;
+  z-index: 100;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.emote-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.emote-option {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.emote-option:hover {
+  border-color: var(--accent-blue);
+  background: var(--bg-primary);
+}
+
 /* Hide zoom controls on desktop by default */
 #mobile-zoom-controls {
   display: none;
 }
+
+/* Radial Menu Mode */
+#emote-menu.radial-mode {
+  position: fixed; /* Fixed to viewport */
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+  box-shadow: none;
+  /* Pointer events passed through container, but buttons catch them */
+  pointer-events: none; 
+  z-index: 2000; /* Ensure high z-index above everything */
+}
+
+/* Background Ring for Radial Menu */
+#emote-menu.radial-mode::before {
+  content: '';
+  position: absolute;
+  top: -130px;
+  left: -130px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.85); /* Dark semi-transparent circle */
+  border: 2px solid var(--accent-blue);
+  z-index: -1; /* Behind buttons */
+  pointer-events: auto; /* Catch clicks on the background */
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+#emote-menu.radial-mode .emote-grid {
+  display: block;
+  position: relative;
+}
+
+#emote-menu.radial-mode .emote-option {
+  position: absolute;
+  top: -20px; /* Center vertical */
+  left: -40px; /* Center horizontal (half button width) */
+  width: 80px;
+  height: 40px;
+  text-align: center;
+  pointer-events: auto;
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.8);
+  border: 2px solid var(--accent-blue);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+#emote-menu.radial-mode .emote-option:hover {
+  background: var(--accent-blue);
+  color: var(--bg-primary);
+  z-index: 10;
+  /* Removed transform scale as it breaks position */
+  box-shadow: 0 0 15px rgba(94, 177, 191, 0.8);
+}
+
+/* 8 Items distributed in a circle (radius 100px) */
+/* Formula: translate(0, -Radius) rotate(-Angle) */
+#emote-menu.radial-mode .emote-option:nth-child(1) { transform: rotate(0deg) translate(0, -100px) rotate(0deg); }
+#emote-menu.radial-mode .emote-option:nth-child(2) { transform: rotate(45deg) translate(0, -100px) rotate(-45deg); }
+#emote-menu.radial-mode .emote-option:nth-child(3) { transform: rotate(90deg) translate(0, -100px) rotate(-90deg); }
+#emote-menu.radial-mode .emote-option:nth-child(4) { transform: rotate(135deg) translate(0, -100px) rotate(-135deg); }
+#emote-menu.radial-mode .emote-option:nth-child(5) { transform: rotate(180deg) translate(0, -100px) rotate(-180deg); }
+#emote-menu.radial-mode .emote-option:nth-child(6) { transform: rotate(225deg) translate(0, -100px) rotate(-225deg); }
+#emote-menu.radial-mode .emote-option:nth-child(7) { transform: rotate(270deg) translate(0, -100px) rotate(-270deg); }
+#emote-menu.radial-mode .emote-option:nth-child(8) { transform: rotate(315deg) translate(0, -100px) rotate(-315deg); }
 
 /* Player color classes */
 .player-color-blue { background-color: #5eb1bf; }

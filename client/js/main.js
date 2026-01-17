@@ -93,7 +93,7 @@ const App = {
           revealedBy: data.by
         };
       });
-      Board.render();
+      Board.requestRender();
       Audio.play('reveal');
     });
 
@@ -105,7 +105,7 @@ const App = {
         Board.board[data.y][data.x] = { state: 'hidden' };
         Audio.play('unflag');
       }
-      Board.render();
+      Board.requestRender();
       
       // Update flags counter
       this.currentGame.flagsRemaining = data.flagsRemaining;
@@ -130,6 +130,10 @@ const App = {
       this.currentGame = data.game;
       this.showScreen('lobby');
       LobbyScreen.init(data.game, this.playerId);
+    });
+
+    Socket.on('emote', (data) => {
+      Board.addEmote(data.playerId, data.value);
     });
 
     Socket.on('error', (data) => {

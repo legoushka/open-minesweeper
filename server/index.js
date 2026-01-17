@@ -228,6 +228,18 @@ wss.on('connection', (ws) => {
           console.log(`Game ${currentGameCode} returned to lobby`);
           break;
         }
+
+        case 'emote': {
+          const { value } = message;
+          if (!currentGameCode || !currentPlayerId) break;
+          
+          broadcastToGame(currentGameCode, {
+            type: 'emote',
+            playerId: currentPlayerId,
+            value
+          }); // Broadcast to everyone including sender
+          break;
+        }
       }
     } catch (error) {
       console.error('Error handling message:', error);

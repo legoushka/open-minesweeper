@@ -81,14 +81,48 @@ const LobbyScreen = {
   setupControls() {
     document.getElementById('copy-code-btn').addEventListener('click', () => {
       const url = `${window.location.origin}/?code=${this.game.code}`;
-      navigator.clipboard.writeText(url).then(() => {
-        const btn = document.getElementById('copy-code-btn');
+      const btn = document.getElementById('copy-code-btn');
+      
+      const showCopied = () => {
         const oldText = btn.textContent;
         btn.textContent = 'COPIED!';
         setTimeout(() => {
           btn.textContent = oldText;
         }, 2000);
-      });
+      };
+
+      // Try modern clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url)
+          .then(showCopied)
+          .catch(() => fallbackCopy(url));
+      } else {
+        fallbackCopy(url);
+      }
+      
+      function fallbackCopy(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        
+        // Ensure it's not visible but part of DOM
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        textArea.style.top = '0';
+        document.body.appendChild(textArea);
+        
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          document.execCommand('copy');
+          showCopied();
+        } catch (err) {
+          console.error('Fallback copy failed', err);
+          prompt('Copy this link:', text);
+        }
+        
+        document.body.removeChild(textArea);
+      }
     });
 
     document.getElementById('start-game-btn').addEventListener('click', () => {

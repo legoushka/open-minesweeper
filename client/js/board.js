@@ -49,7 +49,7 @@ const Board = {
     const marginX = isMobile ? 10 : 100;
     const marginY = isMobile ? 140 : 300;
 
-    const maxWidth = isMobile ? window.innerWidth - marginX : Math.min(window.innerWidth - marginX, 900);
+    const maxWidth = isMobile ? window.innerWidth - marginX : Math.min(window.innerWidth - marginX, 1200);
     const maxHeight = window.innerHeight - marginY;
     
     // If user has set a zoom level, use it
@@ -79,7 +79,7 @@ const Board = {
     if (container) {
       // On mobile, allow the container to be wider if needed, but constrain to viewport for scrolling
       container.style.overflow = 'auto';
-      container.style.maxWidth = isMobile ? '100vw' : `${Math.min(window.innerWidth - marginX, 900)}px`;
+      container.style.maxWidth = isMobile ? '100vw' : `${Math.min(window.innerWidth - marginX, 1200)}px`;
       container.style.maxHeight = isMobile ? '70vh' : `${maxHeight}px`;
     }
     
@@ -110,7 +110,7 @@ const Board = {
     const container = this.canvas.parentElement;
     if (container) {
       container.style.overflow = 'auto';
-      container.style.maxWidth = isMobile ? '100vw' : `${Math.min(window.innerWidth - marginX, 900)}px`;
+      container.style.maxWidth = isMobile ? '100vw' : `${Math.min(window.innerWidth - marginX, 1200)}px`;
       container.style.maxHeight = isMobile ? '70vh' : `${maxHeight}px`;
     }
 

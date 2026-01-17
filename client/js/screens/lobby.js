@@ -70,7 +70,7 @@ const LobbyScreen = {
 
     // Start button (only for host)
     const startBtn = document.getElementById('start-game-btn');
-    if (this.playerId === this.game.hostId && this.game.players.length >= 2) {
+    if (this.playerId === this.game.hostId && this.game.players.length >= 1) {
       startBtn.classList.remove('hidden');
       startBtn.disabled = false;
     } else {

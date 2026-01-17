@@ -50,8 +50,8 @@ class Game {
   }
 
   startGame() {
-    if (this.players.length < 2) {
-      throw new Error('Need at least 2 players to start');
+    if (this.players.length < 1) {
+      throw new Error('Need at least 1 player to start');
     }
     this.state = 'playing';
     this.startTime = Date.now();
